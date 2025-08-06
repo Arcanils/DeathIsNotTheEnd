@@ -6,6 +6,6 @@ namespace Gameplay.Cam.Component
 {
 	public struct CamConfig : IComponentData
 	{
-		public Entity Prefab;
+
 	}
 }

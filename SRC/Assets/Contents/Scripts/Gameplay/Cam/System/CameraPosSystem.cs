@@ -1,6 +1,5 @@
 ﻿using Gameplay.Cam.Component;
 using Gameplay.Common.Component;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -16,6 +15,8 @@ namespace Gameplay.Cam.System
 		public void OnUpdate(ref SystemState state)
 		{
 			var camEntity = SystemAPI.GetSingletonEntity<Camera>();
+			var cam = state.EntityManager.GetComponentObject<UnityEngine.Camera>(camEntity);
+			
 			var endPos = float2.zero;
 			var totalWeight = 0;
 			foreach (var (pos, camTarget) in SystemAPI.Query<Position, CameraTarget>())
@@ -24,13 +25,18 @@ namespace Gameplay.Cam.System
 				totalWeight += camTarget.Weight;
 			}
 
-			if (totalWeight > 0)
+			if (totalWeight == 0)
 				return;
+
+			endPos /= totalWeight;
 
 			state.EntityManager.SetComponentData(camEntity, new Position()
 			{
 				Val = endPos,
 			});
+
+			cam.transform.position = new UnityEngine.Vector3(endPos.x, endPos.y,
+				cam.transform.position.z);
 		}
 	}
 }

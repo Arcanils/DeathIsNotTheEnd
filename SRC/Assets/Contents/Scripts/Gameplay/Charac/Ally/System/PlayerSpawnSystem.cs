@@ -1,63 +1,60 @@
 ﻿using Gameplay.Cam.Component;
+using Gameplay.Charac.Ally.Authoring;
 using Gameplay.Charac.Ally.Component;
 using Gameplay.Common.Component;
+using Gameplay.GM.Sys;
 using Gameplay.View.Component;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Physics;
 
 namespace Gameplay.Charac.Ally.System
 {
+	[RequireMatchingQueriesForUpdate()]
+	[UpdateAfter(typeof(StartGameSystem))]
 	public partial struct PlayerSpawnSystem : ISystem
 	{
-		public void OnCreate(ref SystemState state)
-		{
-			var newEntity = state.EntityManager.CreateEntity();
-			var buffer = state.EntityManager
-				.AddBuffer<PlayerSpawnRequestElement>(newEntity);
-		}
-
 		public void OnUpdate(ref SystemState state)
 		{
-			if (SystemAPI.HasSingleton<Player>())
-				return;
+			var playerConfigEntity = SystemAPI.GetSingletonEntity<PlayerConfig>();
+			var playerConfig = SystemAPI.GetComponent<PlayerConfig>(playerConfigEntity);
+			var inputConfig = state.EntityManager
+				.GetComponentObject<PlayerInputSettings>(playerConfigEntity);
+			var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-			var playerConfig = SystemAPI.GetSingleton<PlayerConfig>();
-
-			foreach (var requests in 
-				SystemAPI.Query<DynamicBuffer<PlayerSpawnRequestElement>>())
+			foreach (var request in SystemAPI.Query<PlayerSpawnRequest>())
 			{
-				var ecb = new EntityCommandBuffer(Allocator.Temp);
-
-				foreach (var request in requests)
+				var newPlayerEntity = ecb.CreateEntity();
+				var playerViewEntity = ecb.Instantiate(playerConfig.Prefab);
+				ecb.AddComponent(newPlayerEntity, new Player());
+				ecb.AddComponent(newPlayerEntity, request.Pos);
+				ecb.AddComponent(newPlayerEntity, new Direction());
+				ecb.AddComponent(newPlayerEntity, new Speed()
 				{
-					var newPlayerEntity = ecb.CreateEntity();
-					var playerViewEntity = ecb.Instantiate(playerConfig.Prefab);
-					ecb.AddComponent(newPlayerEntity, new Player());
-					ecb.AddComponent(newPlayerEntity, request.Pos);
-					ecb.AddComponent(newPlayerEntity, new Direction());
-					ecb.AddComponent(newPlayerEntity, new Speed()
-					{
-						Val = 1f
-					});
+					Val = 1f
+				});
 
-					ecb.AddComponent(newPlayerEntity, new CameraTarget()
-					{
-						Weight = 100,
-					});
+				ecb.AddComponent(newPlayerEntity, new CameraTarget()
+				{
+					Weight = 100,
+				});
 
-					ecb.AddComponent(newPlayerEntity, new ViewEnable()
-					{
-						TargetEntity = ecb.Instantiate(playerViewEntity)
-					});
+				ecb.AddComponent(newPlayerEntity, new ViewEnable()
+				{
+					TargetEntity = ecb.Instantiate(playerViewEntity)
+				});
 
-					break;
-				}
+				ecb.AddComponent(newPlayerEntity, new PhysicsVelocity());
+				ecb.AddComponent(newPlayerEntity, new PhysicsDamping());
+				ecb.AddComponent(newPlayerEntity, new PhysicsCollider());
+				ecb.AddComponent(newPlayerEntity, new PhysicsMass());
+				ecb.AddSharedComponent(newPlayerEntity, new PhysicsWorldIndex());
 
-				requests.Clear();
-
-				ecb.Playback(state.EntityManager);
-				ecb.Dispose();
+				ecb.AddComponent(newPlayerEntity, inputConfig);
 			}
+
+			ecb.Playback(state.EntityManager);
+			ecb.Dispose();
 		}
 	}
 }

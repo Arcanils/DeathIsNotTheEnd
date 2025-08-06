@@ -4,6 +4,7 @@ using Gameplay.Charac.Ally.Component;
 using System;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Gameplay.Charac.Ally.Authoring
 {
@@ -20,6 +21,7 @@ namespace Gameplay.Charac.Ally.Authoring
 					Prefab = GetEntity(authoring.Config.Prefab,
 						TransformUsageFlags.Dynamic)
 				});
+				AddComponentObject(entity, authoring.Config.InputSettings);
 			}
 		}
 	}
@@ -28,5 +30,13 @@ namespace Gameplay.Charac.Ally.Authoring
 	public class PlayerConfigSettings
 	{
 		public GameObject Prefab;
+		public PlayerInputSettings InputSettings;
 	}
+
+	[Serializable]
+	public class PlayerInputSettings
+	{
+		public InputActionReference MoveActionRef;
+	}
+
 }

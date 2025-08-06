@@ -16,8 +16,6 @@ namespace Gameplay.Cam.Authoring
 				var entity = GetEntity(TransformUsageFlags.None);
 				AddComponent(entity, new CamConfig()
 				{
-					Prefab = GetEntity(authoring.Config.Prefab,
-						TransformUsageFlags.Dynamic)
 				});
 			}
 		}
@@ -26,6 +24,6 @@ namespace Gameplay.Cam.Authoring
 	[Serializable]
 	public class CamConfigSettings
 	{
-		public GameObject Prefab;
+
 	}
 }
